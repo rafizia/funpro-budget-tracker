@@ -1,5 +1,6 @@
 defmodule RealtimeQaWeb.Question do
   use RealtimeQaWeb, :live_view
+  alias RealtimeQa.Questions
 
   def render(assigns) do
     ~H"""
@@ -23,7 +24,7 @@ defmodule RealtimeQaWeb.Question do
         <ul>
           <%= for q <- @questions do %>
             <li class="flex items-center justify-between border-b py-2">
-              <span>{q}</span>
+              <span>{q.content}</span>
               <div class="flex items-center space-x-2 text-gray-600">
                 <button>👍</button> <button>👎</button>
               </div>
@@ -36,10 +37,11 @@ defmodule RealtimeQaWeb.Question do
   end
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, questions: [])}
+    {:ok, assign(socket, questions: Questions.list_questions())}
   end
 
   def handle_event("add_question", %{"question" => question}, socket) do
-    {:noreply, update(socket, :questions, fn qs -> qs ++ [question] end)}
+    Questions.create_question(%{content: question, upvotes: 0})
+    {:noreply, assign(socket, questions: Questions.list_questions())}
   end
 end
