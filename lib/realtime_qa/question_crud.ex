@@ -12,4 +12,16 @@ defmodule RealtimeQa.Questions do
     |> Question.changeset(attrs)
     |> Repo.insert()
   end
+
+  def get_question!(id), do: Repo.get!(Question, id)
+
+  def update_question(%Question{} = question, attrs) do
+    question
+    |> Question.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_question(%Question{} = question) do
+    Repo.delete(question)
+  end
 end
