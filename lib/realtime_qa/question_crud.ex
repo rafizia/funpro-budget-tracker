@@ -3,8 +3,10 @@ defmodule RealtimeQa.Questions do
   alias RealtimeQa.Repo
   alias RealtimeQa.Question
 
-  def list_questions do
-    Repo.all(from q in Question, order_by: [desc: q.inserted_at])
+  def list_questions(room_id) do
+    Repo.all(from q in Question,
+      where: q.room_id == ^room_id,
+      order_by: [desc: q.inserted_at])
   end
 
   def create_question(attrs \\ %{}) do
