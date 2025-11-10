@@ -17,9 +17,9 @@ defmodule RealtimeQaWeb.Router do
   scope "/", RealtimeQaWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-
-    live("/question", Question)
+    live "/", RoomLive
+    live "/dashboard", DashboardLive
+    live "/room/:code", RoomLive
   end
 
   # Other scopes may use custom stacks.

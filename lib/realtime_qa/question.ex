@@ -4,7 +4,10 @@ defmodule RealtimeQa.Question do
 
   schema "questions" do
     field :content, :string
-    field :upvotes, :integer
+    field :upvotes, :integer, default: 0
+
+    belongs_to :room, RealtimeQa.Room
+    has_many :question_upvotes, RealtimeQa.QuestionUpvote
 
     timestamps(type: :utc_datetime)
   end
@@ -12,7 +15,8 @@ defmodule RealtimeQa.Question do
   @doc false
   def changeset(question, attrs) do
     question
-    |> cast(attrs, [:content, :upvotes])
-    |> validate_required([:content, :upvotes])
+    |> cast(attrs, [:content, :room_id])
+    |> validate_required([:content, :room_id])
+    |> foreign_key_constraint(:room_id)
   end
 end
