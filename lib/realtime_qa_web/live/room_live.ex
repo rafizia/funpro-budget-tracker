@@ -75,7 +75,6 @@ defmodule RealtimeQaWeb.RoomLive do
   end
 
   # lifecycle callbacks
-
   def mount(_params, session, socket) do
     fingerprint = session["user_fingerprint"] || generate_fallback_fingerprint(socket)
 

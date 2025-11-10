@@ -14,19 +14,17 @@ defmodule RealtimeQaWeb.Router do
   defp put_user_fingerprint(conn, _opts) do
     case conn.req_cookies["user_fingerprint"] do
       nil ->
-        # Generate fingerprint baru
         fingerprint = generate_persistent_fingerprint()
 
         conn
         |> put_resp_cookie("user_fingerprint", fingerprint,
-            max_age: 365 * 24 * 60 * 60,  # 1 tahun
+            max_age: 365 * 24 * 60 * 60,
             http_only: true,
             same_site: "Lax"
           )
         |> put_session(:user_fingerprint, fingerprint)
 
       fingerprint ->
-        # Gunakan fingerprint yang sudah ada
         put_session(conn, :user_fingerprint, fingerprint)
     end
   end
