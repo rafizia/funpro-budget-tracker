@@ -8,8 +8,9 @@ defmodule RealtimeQaWeb.RoomLive do
       <div class="p-10">
         <div class="mb-8">
           <h1 class="text-4xl font-bold mb-2"><%= @room.title %></h1>
-          <p class="text-gray-600"><%= @room.description %></p>
-          <p class="mt-2">Room Code: <span class="font-mono font-bold"><%= @room.code %></span></p>
+          <p class="text-gray-600 text-lg"><%= @room.description %></p>
+          <p class="my-2">Room Code:</p>
+          <p class="font-mono font-bold text-3xl"><%= @room.code %></p>
         </div>
 
         <div class="mb-8">
@@ -18,30 +19,40 @@ defmodule RealtimeQaWeb.RoomLive do
             <input
               type="text"
               name="question"
-              class="w-full border rounded p-2"
+              class="w-full bg-white rounded p-3"
               placeholder="Type your question..."
               required
             />
-            <button class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
+            <button class="bg-blue-700 text-lg font-medium text-white px-4 py-2 rounded mt-3">
               Submit Question
             </button>
           </form>
         </div>
 
         <div>
-          <h2 class="text-2xl font-semibold mb-4">Questions</h2>
-          <div class="space-y-4">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold">Questions</h2>
+          </div>
+
+          <div class="space-y-5">
             <%= for q <- @questions do %>
-              <div class="flex items-center justify-between border-b py-4">
-                <span class="flex-1 mr-4"><%= q.content %></span>
-                <div class="flex items-center space-x-2">
-                  <button
-                    phx-click="upvote"
-                    phx-value-id={q.id}
-                    class="px-3 py-1 rounded bg-green-100 hover:bg-green-200 text-gray-600"
-                  >
-                    👍 <%= q.upvotes %>
-                  </button>
+              <div class="bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow">
+                <div class="flex items-start gap-4">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xl text-gray-900"><%= q.content %></p>
+                    <div class="mt-2 flex items-center gap-2 text-lg text-gray-500">
+                      <span>Anonymous</span>
+                    </div>
+                  </div>
+                  <div class="flex-none">
+                    <button
+                      phx-click="upvote"
+                      phx-value-id={q.id}
+                      class="flex flex-col items-center gap-1 group"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#417505" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>                      <span class="text-sm font-medium"><%= q.upvotes %></span>
+                    </button>
+                  </div>
                 </div>
               </div>
             <% end %>
@@ -54,7 +65,7 @@ defmodule RealtimeQaWeb.RoomLive do
         <div class="max-w-md">
           <form phx-submit="join_room" class="space-y-4">
             <div>
-              <label class="block text-lg font-medium">Enter Room Code</label>
+              <label class="block text-xl font-medium mb-2">Enter Room Code</label>
               <input
                 type="text"
                 name="code"
@@ -63,7 +74,7 @@ defmodule RealtimeQaWeb.RoomLive do
                 required
               />
             </div>
-            <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            <button type="submit" class="w-full bg-blue-700 text-white text-lg font-medium px-4 py-2 rounded hover:bg-blue-900">
               Join Room
             </button>
           </form>
