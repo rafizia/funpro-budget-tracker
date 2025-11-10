@@ -76,13 +76,23 @@ defmodule RealtimeQaWeb.RoomLive do
 
   # lifecycle callbacks
 
-  def mount(_params, _session, socket) do
-    fingerprint = generate_fingerprint(socket)
+  def mount(_params, session, socket) do
+    fingerprint = session["user_fingerprint"] || generate_fallback_fingerprint(socket)
 
     {:ok,
-     socket
-     |> assign(room: nil, questions: [], upvoted_questions: MapSet.new())
-     |> assign(user_fingerprint: fingerprint)}
+    socket
+    |> assign(room: nil, questions: [], upvoted_questions: MapSet.new())
+    |> assign(user_fingerprint: fingerprint)}
+  end
+
+  defp generate_fallback_fingerprint(socket) do
+    peer_data = get_connect_info(socket, :peer_data)
+    user_agent = get_connect_info(socket, :user_agent) || "unknown"
+    ip = extract_ip(peer_data)
+
+    :crypto.hash(:sha256, "#{ip}-#{user_agent}-#{:erlang.unique_integer()}")
+    |> Base.encode16()
+    |> String.slice(0..31)
   end
 
   def handle_params(%{"code" => code}, _uri, socket) do
@@ -108,7 +118,7 @@ defmodule RealtimeQaWeb.RoomLive do
     {:noreply, assign(socket, room: nil, questions: [])}
   end
 
-  # event handlersd
+  # event handler
   def handle_event("join_room", %{"code" => code}, socket) do
     {:noreply, push_patch(socket, to: ~p"/room/#{code}")}
   end
@@ -149,16 +159,6 @@ defmodule RealtimeQaWeb.RoomLive do
   end
 
   # helper function
-  defp generate_fingerprint(socket) do
-    peer_data = get_connect_info(socket, :peer_data)
-    user_agent = get_connect_info(socket, :user_agent) || "unknown"
-
-    ip = extract_ip(peer_data)
-    :crypto.hash(:sha256, "#{ip}-#{user_agent}")
-    |> Base.encode16()
-    |> String.slice(0..15)
-  end
-
   defp extract_ip(%{address: address}) do
     address
     |> Tuple.to_list()
