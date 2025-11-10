@@ -7,6 +7,7 @@ defmodule RealtimeQa.Question do
     field :upvotes, :integer, default: 0
 
     belongs_to :room, RealtimeQa.Room
+    has_many :question_upvotes, RealtimeQa.QuestionUpvote
 
     timestamps(type: :utc_datetime)
   end

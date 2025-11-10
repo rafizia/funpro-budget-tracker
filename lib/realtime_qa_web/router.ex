@@ -8,6 +8,31 @@ defmodule RealtimeQaWeb.Router do
     plug :put_root_layout, html: {RealtimeQaWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_user_fingerprint
+  end
+
+  defp put_user_fingerprint(conn, _opts) do
+    case conn.req_cookies["user_fingerprint"] do
+      nil ->
+        # Generate fingerprint baru
+        fingerprint = generate_persistent_fingerprint()
+
+        conn
+        |> put_resp_cookie("user_fingerprint", fingerprint,
+            max_age: 365 * 24 * 60 * 60,  # 1 tahun
+            http_only: true,
+            same_site: "Lax"
+          )
+        |> put_session(:user_fingerprint, fingerprint)
+
+      fingerprint ->
+        # Gunakan fingerprint yang sudah ada
+        put_session(conn, :user_fingerprint, fingerprint)
+    end
+  end
+
+  defp generate_persistent_fingerprint do
+    :crypto.strong_rand_bytes(32) |> Base.encode16()
   end
 
   pipeline :api do

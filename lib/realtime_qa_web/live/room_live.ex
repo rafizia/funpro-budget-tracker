@@ -38,7 +38,8 @@ defmodule RealtimeQaWeb.RoomLive do
                   <button
                     phx-click="upvote"
                     phx-value-id={q.id}
-                    class="px-3 py-1 rounded bg-green-100 hover:bg-green-200 text-gray-600"
+                    class={upvote_button_class(q.id, @upvoted_questions)}
+                    disabled={is_upvoted?(q.id, @upvoted_questions)}
                   >
                     👍 <%= q.upvotes %>
                   </button>
@@ -73,8 +74,25 @@ defmodule RealtimeQaWeb.RoomLive do
     """
   end
 
-  def mount(_params, _session, socket) do
-    {:ok, assign(socket, room: nil, questions: [])}
+  # lifecycle callbacks
+
+  def mount(_params, session, socket) do
+    fingerprint = session["user_fingerprint"] || generate_fallback_fingerprint(socket)
+
+    {:ok,
+    socket
+    |> assign(room: nil, questions: [], upvoted_questions: MapSet.new())
+    |> assign(user_fingerprint: fingerprint)}
+  end
+
+  defp generate_fallback_fingerprint(socket) do
+    peer_data = get_connect_info(socket, :peer_data)
+    user_agent = get_connect_info(socket, :user_agent) || "unknown"
+    ip = extract_ip(peer_data)
+
+    :crypto.hash(:sha256, "#{ip}-#{user_agent}-#{:erlang.unique_integer()}")
+    |> Base.encode16()
+    |> String.slice(0..31)
   end
 
   def handle_params(%{"code" => code}, _uri, socket) do
@@ -86,9 +104,13 @@ defmodule RealtimeQaWeb.RoomLive do
          |> push_navigate(to: ~p"/")}
 
       room ->
+        # Load questions dan upvoted status
+        questions = Questions.list_questions(room.id)
+        upvoted = Questions.get_upvoted_question_ids(room.id, socket.assigns.user_fingerprint)
+
         {:noreply,
          socket
-         |> assign(room: room, questions: Questions.list_questions(room.id))}
+         |> assign(room: room, questions: questions, upvoted_questions: upvoted)}
     end
   end
 
@@ -96,6 +118,7 @@ defmodule RealtimeQaWeb.RoomLive do
     {:noreply, assign(socket, room: nil, questions: [])}
   end
 
+  # event handler
   def handle_event("join_room", %{"code" => code}, socket) do
     {:noreply, push_patch(socket, to: ~p"/room/#{code}")}
   end
@@ -103,25 +126,55 @@ defmodule RealtimeQaWeb.RoomLive do
   def handle_event("add_question", %{"question" => content}, socket) do
     room = socket.assigns.room
 
-    case Questions.create_question(%{
-           "content" => content,
-           "room_id" => room.id
-         }) do
+    case Questions.create_question(%{"content" => content, "room_id" => room.id}) do
       {:ok, _question} ->
-        {:noreply,
-         socket
-         |> assign(questions: Questions.list_questions(room.id))}
+        {:noreply, socket |> assign(questions: Questions.list_questions(room.id))}
 
       {:error, _changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Error creating question")}
+        {:noreply, socket |> put_flash(:error, "Error creating question")}
     end
   end
 
   def handle_event("upvote", %{"id" => id}, socket) do
-    Questions.upvote_question(id)
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+    question_id = String.to_integer(id)
+    fingerprint = socket.assigns.user_fingerprint
+    upvoted = socket.assigns.upvoted_questions
+
+    if is_upvoted?(question_id, upvoted) do
+      {:noreply, socket}
+    else
+      case Questions.add_upvote(question_id, fingerprint) do
+        {:ok, _question} ->
+          new_upvoted = MapSet.put(upvoted, question_id)
+          new_questions = Questions.list_questions(socket.assigns.room.id)
+
+          {:noreply,
+           socket
+           |> assign(questions: new_questions, upvoted_questions: new_upvoted)}
+
+        {:error, _reason} ->
+          {:noreply, socket |> put_flash(:error, "Failed to upvote")}
+      end
+    end
+  end
+
+  # helper function
+  defp extract_ip(%{address: address}) do
+    address
+    |> Tuple.to_list()
+    |> Enum.join(".")
+  end
+  defp extract_ip(_), do: "unknown"
+
+  defp is_upvoted?(question_id, upvoted_set) do
+    MapSet.member?(upvoted_set, question_id)
+  end
+
+  defp upvote_button_class(question_id, upvoted_set) do
+    if is_upvoted?(question_id, upvoted_set) do
+      "px-3 py-1 rounded bg-green-500 text-white cursor-not-allowed opacity-70"
+    else
+      "px-3 py-1 rounded bg-green-100 hover:bg-green-200 text-gray-600"
+    end
   end
 end
