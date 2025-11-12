@@ -12,25 +12,25 @@ defmodule RealtimeQaWeb.DashboardLive do
         <form phx-submit="create_room">
           <div class="space-y-4">
             <div>
-              <label class="block text-lg font-medium">Room Title</label>
+              <label class="block text-lg font-medium mb-2">Room Title</label>
               <input
                 type="text"
                 name="title"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 placeholder="My Q&A Session"
                 required
               />
             </div>
             <div>
-              <label class="block text-lg font-medium">Description (Optional)</label>
+              <label class="block text-lg font-medium mb-2">Description (Optional)</label>
               <textarea
                 name="description"
                 rows="3"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 placeholder="What's this Q&A session about?"
               ></textarea>
             </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            <button type="submit" class="bg-blue-700 text-white text-lg font-medium px-4 py-2 rounded hover:bg-blue-900">
               Create Room
             </button>
           </div>
@@ -41,11 +41,11 @@ defmodule RealtimeQaWeb.DashboardLive do
         <h2 class="text-2xl font-semibold mb-4">Your Rooms</h2>
         <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <%= for room <- @rooms do %>
-            <div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow">
               <h3 class="text-xl font-medium mb-2"><%= room.title %></h3>
-              <p class="text-gray-300 text-sm mb-4"><%= room.description %></p>
+              <p class="text-gray-500 mb-4"><%= room.description %></p>
               <div class="flex justify-between items-center">
-                <div class="bg-white px-3 py-1 rounded text-black">
+                <div class="py-1 rounded text-black text-xl">
                   Code: <span class="font-mono font-bold"><%= room.code %></span>
                 </div>
                 <.link
