@@ -15,6 +15,17 @@ defmodule RealtimeQa.Questions do
     %Question{}
     |> Question.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, question} ->
+        RealtimeQaWeb.Endpoint.broadcast("room:#{question.room_id}", "question_created", %{
+          question: question
+        })
+
+        {:ok, question}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def get_question!(id), do: Repo.get!(Question, id)
@@ -34,15 +45,25 @@ defmodule RealtimeQa.Questions do
   Returns {:ok, question} atau {:error, reason}
   """
   def add_upvote(question_id, user_fingerprint) do
-    Repo.transaction(fn ->
-      case insert_upvote_record(question_id, user_fingerprint) do
-        {:ok, _upvote} ->
-          increment_upvote_count(question_id)
+    case Repo.transaction(fn ->
+           case insert_upvote_record(question_id, user_fingerprint) do
+             {:ok, _upvote} ->
+               increment_upvote_count(question_id)
 
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
+             {:error, changeset} ->
+               Repo.rollback(changeset)
+           end
+         end) do
+      {:ok, question} ->
+        RealtimeQaWeb.Endpoint.broadcast("room:#{question.room_id}", "question_upvoted", %{
+          question: question
+        })
+
+        {:ok, question}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """
@@ -81,10 +102,11 @@ defmodule RealtimeQa.Questions do
   end
 
   defp increment_upvote_count(question_id) do
-    {1, _} = Repo.update_all(
-      from(q in Question, where: q.id == ^question_id),
-      inc: [upvotes: 1]
-    )
+    {1, _} =
+      Repo.update_all(
+        from(q in Question, where: q.id == ^question_id),
+        inc: [upvotes: 1]
+      )
 
     Repo.get!(Question, question_id)
   end
