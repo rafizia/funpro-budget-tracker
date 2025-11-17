@@ -8,10 +8,10 @@ defmodule RealtimeQaWeb.RoomLive do
       <div class="p-10">
         <!-- ROOM HEADER -->
         <div class="mb-8">
-          <h1 class="text-4xl font-bold mb-2"><%= @room.title %></h1>
-          <p class="text-gray-600 text-lg"><%= @room.description %></p>
+          <h1 class="text-4xl font-bold mb-2">{@room.title}</h1>
+          <p class="text-gray-600 text-lg">{@room.description}</p>
           <p class="my-2">Room Code:</p>
-          <p class="font-mono font-bold text-4xl"><%= @room.code %></p>
+          <p class="font-mono font-bold text-4xl">{@room.code}</p>
         </div>
 
         <!-- ASK FORM -->
@@ -57,7 +57,7 @@ defmodule RealtimeQaWeb.RoomLive do
                       </form>
                     <% else %>
                       <!-- DISPLAY MODE -->
-                      <p class="text-xl text-gray-900"><%= q.content %></p>
+                      <p class="text-xl text-gray-900">{q.content}</p>
                       <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
                         <span>Anonymous</span>
                       </div>
@@ -73,15 +73,42 @@ defmodule RealtimeQaWeb.RoomLive do
                       disabled={is_upvoted?(q.id, @upvoted_questions)}
                     >
                       <%= if is_upvoted?(q.id, @upvoted_questions) do %>
-                        <svg class="w-[30px] h-[30px] text-green-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                          <path fill-rule="evenodd" d="M15.03 9.684h3.965c.322 0 .64.08.925.232.286.153.532.374.717.645a2.109 2.109 0 0 1 .242 1.883l-2.36 7.201c-.288.814-.48 1.355-1.884 1.355-2.072 0-4.276-.677-6.157-1.256-.472-.145-.924-.284-1.348-.404h-.115V9.478a25.485 25.485 0 0 0 4.238-5.514 1.8 1.8 0 0 1 .901-.83 1.74 1.74 0 0 1 1.21-.048c.396.13.736.397.96.757.225.36.32.788.269 1.211l-1.562 4.63ZM4.177 10H7v8a2 2 0 1 1-4 0v-6.823C3 10.527 3.527 10 4.176 10Z" clip-rule="evenodd"/>
+                        <svg
+                          class="w-[30px] h-[30px] text-gray-800 dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            fill="green"
+                            d="M15.03 9.684h3.965c.322 0 .64.08.925.232.286.153.532.374.717.645a2.109 2.109 0 0 1 .242 1.883l-2.36 7.201c-.288.814-.48 1.355-1.884 1.355-2.072 0-4.276-.677-6.157-1.256-.472-.145-.924-.284-1.348-.404h-.115V9.478a25.485 25.485 0 0 0 4.238-5.514 1.8 1.8 0 0 1 .901-.83 1.74 1.74 0 0 1 1.21-.048c.396.13.736.397.96.757.225.36.32.788.269 1.211l-1.562 4.63ZM4.177 10H7v8a2 2 0 1 1-4 0v-6.823C3 10.527 3.527 10 4.176 10Z"
+                            clip-rule="evenodd"
+                          />
                         </svg>
                       <% else %>
-                        <svg class="w-[30px] h-[30px] text-gray-800" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11c.889-.086 1.416-.543 2.156-1.057a22.323 22.323 0 0 0 3.958-5.084 1.6 1.6 0 0 1 .582-.628 1.549 1.549 0 0 1 1.466-.087c.205.095.388.233.537.406a1.64 1.64 0 0 1 .384 1.279l-1.388 4.114M7 11H4v6.5A1.5 1.5 0 0 0 5.5 19v0A1.5 1.5 0 0 0 7 17.5V11Zm6.5-1h4.915c.286 0 .372.014.626.15.254.135.472.332.637.572a1.874 1.874 0 0 1 .215 1.673l-2.098 6.4C17.538 19.52 17.368 20 16.12 20c-2.303 0-4.79-.943-6.67-1.475"/>
+                        <svg
+                          class="w-[30px] h-[30px] text-gray-800 dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M7 11c.889-.086 1.416-.543 2.156-1.057a22.323 22.323 0 0 0 3.958-5.084 1.6 1.6 0 0 1 .582-.628 1.549 1.549 0 0 1 1.466-.087c.205.095.388.233.537.406a1.64 1.64 0 0 1 .384 1.279l-1.388 4.114M7 11H4v6.5A1.5 1.5 0 0 0 5.5 19v0A1.5 1.5 0 0 0 7 17.5V11Zm6.5-1h4.915c.286 0 .372.014.626.15.254.135.472.332.637.572a1.874 1.874 0 0 1 .215 1.673l-2.098 6.4C17.538 19.52 17.368 20 16.12 20c-2.303 0-4.79-.943-6.67-1.475"
+                          />
                         </svg>
                       <% end %>
-                      <span class="text-sm font-medium"><%= q.upvotes %></span>
+                      <span class="text-sm font-medium">{q.upvotes}</span>
                     </button>
 
                     <!-- ACTION BUTTONS -->
@@ -133,7 +160,10 @@ defmodule RealtimeQaWeb.RoomLive do
                 required
               />
             </div>
-            <button type="submit" class="w-full bg-blue-700 text-white text-lg font-medium px-4 py-2 rounded hover:bg-blue-900 transition">
+            <button
+              type="submit"
+              class="w-full bg-blue-700 text-white text-lg font-medium px-4 py-2 rounded hover:bg-blue-900"
+            >
               Join Room
             </button>
           </form>
@@ -148,9 +178,9 @@ defmodule RealtimeQaWeb.RoomLive do
     fingerprint = session["user_fingerprint"] || generate_fallback_fingerprint(socket)
 
     {:ok,
-     socket
-     |> assign(room: nil, questions: [], upvoted_questions: MapSet.new())
-     |> assign(user_fingerprint: fingerprint, editing_question_id: nil)}
+      socket
+      |> assign(room: nil, questions: [], upvoted_questions: MapSet.new())
+      |> assign(user_fingerprint: fingerprint, editing_question_id: nil)}
   end
 
   defp generate_fallback_fingerprint(socket) do
@@ -172,6 +202,9 @@ defmodule RealtimeQaWeb.RoomLive do
          |> push_navigate(to: ~p"/")}
 
       room ->
+        # Subscribe to receive realtime broadcasts
+        RealtimeQaWeb.Endpoint.subscribe("room:#{room.id}")
+
         questions = Questions.list_questions(room.id)
         upvoted = Questions.get_upvoted_question_ids(room.id, socket.assigns.user_fingerprint)
 
@@ -253,9 +286,28 @@ defmodule RealtimeQaWeb.RoomLive do
     end
   end
 
+  # Handle broadcasts from PubSub (question)
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_created", payload: %{question: _question}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
+  # Handle broadcasts from PubSub (upvote)
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_upvoted", payload: %{question: _question}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
   # helpers
   defp extract_ip(%{address: address}),
     do: address |> Tuple.to_list() |> Enum.join(".")
+
   defp extract_ip(_), do: "unknown"
 
   defp is_upvoted?(question_id, upvoted_set),
