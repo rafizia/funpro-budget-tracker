@@ -9,11 +9,9 @@ defmodule RealtimeQa.Repo.Migrations.CreateQuestionUpvotes do
       timestamps(type: :utc_datetime)
     end
 
-    # Index untuk performance
     create index(:question_upvotes, [:question_id])
     create index(:question_upvotes, [:user_fingerprint])
 
-    # Unique constraint: 1 user hanya bisa upvote 1x per question
     create unique_index(:question_upvotes, [:question_id, :user_fingerprint])
   end
 end

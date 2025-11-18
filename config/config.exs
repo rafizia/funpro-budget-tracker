@@ -63,3 +63,14 @@ config :phoenix, :json_library, Jason
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+# config :ueberauth, Ueberauth,
+#   providers: [
+#     google: {Ueberauth.Strategy.Google, []}
+#   ]
+
+# config :ueberauth, Ueberauth.Strategy.Google.OAuth,
+#   client_id: "1097874208226-t4g4bcmc0ipif9r1phdbfbnodqedfc8a.apps.googleusercontent.com",
+#   client_secret: "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",
+#   redirect_uri: "http://localhost:4000/auth/google/callback",
+#   scope: "openid email profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"

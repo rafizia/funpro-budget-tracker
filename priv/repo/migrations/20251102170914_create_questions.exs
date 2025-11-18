@@ -4,7 +4,7 @@ defmodule RealtimeQa.Repo.Migrations.CreateQuestions do
   def change do
     create table(:questions) do
       add :content, :string
-      add :upvotes, :integer
+      add :upvotes, :integer, default: 0
 
       timestamps(type: :utc_datetime)
     end
