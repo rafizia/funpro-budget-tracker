@@ -4,6 +4,7 @@ defmodule RealtimeQa.Question do
 
   schema "questions" do
     field :content, :string
+    field :user_fingerprint, :string
     field :upvotes, :integer, default: 0
 
     belongs_to :room, RealtimeQa.Room
@@ -15,8 +16,8 @@ defmodule RealtimeQa.Question do
   @doc false
   def changeset(question, attrs) do
     question
-    |> cast(attrs, [:content, :room_id])
-    |> validate_required([:content, :room_id])
+    |> cast(attrs, [:content, :room_id, :user_fingerprint])
+    |> validate_required([:content, :room_id, :user_fingerprint])
     |> foreign_key_constraint(:room_id)
   end
 end

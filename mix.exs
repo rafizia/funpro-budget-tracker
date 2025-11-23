@@ -67,7 +67,8 @@ defmodule RealtimeQa.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:ueberauth, "~> 0.10"},
-      {:ueberauth_google, "~> 0.12"}
+      {:ueberauth_google, "~> 0.12"},
+      {:eqrcode, "~> 0.1.10"}
     ]
   end
 

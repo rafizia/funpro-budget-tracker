@@ -19,9 +19,14 @@ defmodule RealtimeQaWeb.RoomLive do
               </span>
             <% end %>
           </div>
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 inline-block">
-            <p class="text-sm text-gray-600 mb-1">Room Code</p>
-            <p class="font-mono font-bold text-3xl text-blue-600">{@room.code}</p>
+          <div class="flex justify-between items-start">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 inline-block">
+              <p class="text-sm text-gray-600 mb-1">Room Code</p>
+              <p class="font-mono font-bold text-3xl text-blue-600">{@room.code}</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-2 inline-block">
+              <%= (RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}") |> EQRCode.encode() |> EQRCode.svg(width: 170) |> Phoenix.HTML.raw() %>
+            </div>
           </div>
         </div>
 
@@ -68,8 +73,12 @@ defmodule RealtimeQaWeb.RoomLive do
                             class="flex-1 border border-gray-300 rounded p-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
                             required
                           />
-                          <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">💾</button>
-                          <button type="button" phx-click="cancel_edit" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400">✖</button>
+                          <button class="ml-1 p-2 rounded-full hover:bg-blue-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="oklch(54.6% 0.245 262.881)" d="M64 80c-8.8 0-16 7.2-16 16l0 320c0 8.8 7.2 16 16 16l320 0c8.8 0 16-7.2 16-16l0-242.7c0-4.2-1.7-8.3-4.7-11.3L320 86.6 320 176c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-96-32 0zm80 0l0 80 128 0 0-80-128 0zM0 96C0 60.7 28.7 32 64 32l242.7 0c17 0 33.3 6.7 45.3 18.7L429.3 128c12 12 18.7 28.3 18.7 45.3L448 416c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM160 320a64 64 0 1 1 128 0 64 64 0 1 1 -128 0z"/></svg>
+                          </button>
+                          <button type="button" phx-click="cancel_edit" class="p-2 rounded-full hover:bg-red-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 384 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="oklch(63.7% 0.237 25.331)" d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/></svg>
+                          </button>
                         </form>
                       <% else %>
                         <!-- DISPLAY MODE -->
@@ -122,8 +131,8 @@ defmodule RealtimeQaWeb.RoomLive do
                         <span class="text-sm font-medium">{q.upvotes}</span>
                       </button>
 
-                      <!-- HOST ACTION BUTTONS -->
-                      <%= if is_host?(assigns) do %>
+                      <!-- HOST/OWNER ACTION BUTTONS -->
+                      <%= if is_host?(assigns) || q.user_fingerprint == @user_fingerprint do %>
                         <div class="flex space-x-2 mt-2">
                           <!-- EDIT BUTTON -->
                           <button
@@ -240,8 +249,13 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_event("add_question", %{"question" => content}, socket) do
     room = socket.assigns.room
+    user_fingerprint = socket.assigns.user_fingerprint
 
-    case Questions.create_question(%{"content" => content, "room_id" => room.id}) do
+    case Questions.create_question(%{
+           "content" => content,
+           "room_id" => room.id,
+           "user_fingerprint" => user_fingerprint
+         }) do
       {:ok, _} ->
         {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
 
@@ -251,10 +265,12 @@ defmodule RealtimeQaWeb.RoomLive do
   end
 
   def handle_event("edit_question", %{"id" => id}, socket) do
-    if is_host?(socket.assigns) do
-      {:noreply, assign(socket, editing_question_id: String.to_integer(id))}
+    question = Questions.get_question!(String.to_integer(id))
+
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
+      {:noreply, assign(socket, editing_question_id: question.id)}
     else
-      {:noreply, put_flash(socket, :error, "Only the host can edit questions")}
+      {:noreply, put_flash(socket, :error, "You can only edit your own questions")}
     end
   end
 
@@ -262,9 +278,9 @@ defmodule RealtimeQaWeb.RoomLive do
     do: {:noreply, assign(socket, editing_question_id: nil)}
 
   def handle_event("save_edit", %{"id" => id, "content" => content}, socket) do
-    if is_host?(socket.assigns) do
-      question = Questions.get_question!(String.to_integer(id))
+    question = Questions.get_question!(String.to_integer(id))
 
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       case Questions.update_question(question, %{"content" => content}) do
         {:ok, _} ->
           {:noreply,
@@ -279,13 +295,14 @@ defmodule RealtimeQaWeb.RoomLive do
           {:noreply, put_flash(socket, :error, "Failed to update question")}
       end
     else
-      {:noreply, put_flash(socket, :error, "Only the host can edit questions")}
+      {:noreply, put_flash(socket, :error, "You can only edit your own questions")}
     end
   end
 
   def handle_event("delete_question", %{"id" => id}, socket) do
-    if is_host?(socket.assigns) do
-      question = Questions.get_question!(String.to_integer(id))
+    question = Questions.get_question!(String.to_integer(id))
+
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       {:ok, _} = Questions.delete_question(question)
 
       {:noreply,
@@ -293,7 +310,7 @@ defmodule RealtimeQaWeb.RoomLive do
        |> assign(questions: Questions.list_questions(socket.assigns.room.id))
        |> put_flash(:info, "Question deleted")}
     else
-      {:noreply, put_flash(socket, :error, "Only the host can delete questions")}
+      {:noreply, put_flash(socket, :error, "You can only delete your own questions")}
     end
   end
 
@@ -331,6 +348,22 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_info(
         %Phoenix.Socket.Broadcast{event: "question_upvoted", payload: %{question: _question}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_deleted", payload: %{question_id: _id}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_updated", payload: %{question: _question}},
         socket
       ) do
     room = socket.assigns.room
