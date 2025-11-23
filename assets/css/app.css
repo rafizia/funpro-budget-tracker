@@ -25,7 +25,7 @@
   name: "dark";
   default: false;
   prefersdark: true;
-  color-scheme: "dark";
+  color-scheme: "light";
   --color-base-100: oklch(30.33% 0.016 252.42);
   --color-base-200: oklch(25.26% 0.014 253.1);
   --color-base-300: oklch(20.15% 0.012 254.09);
