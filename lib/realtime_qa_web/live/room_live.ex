@@ -122,8 +122,8 @@ defmodule RealtimeQaWeb.RoomLive do
                         <span class="text-sm font-medium">{q.upvotes}</span>
                       </button>
 
-                      <!-- HOST ACTION BUTTONS -->
-                      <%= if is_host?(assigns) do %>
+                      <!-- HOST/OWNER ACTION BUTTONS -->
+                      <%= if is_host?(assigns) || q.user_fingerprint == @user_fingerprint do %>
                         <div class="flex space-x-2 mt-2">
                           <!-- EDIT BUTTON -->
                           <button
@@ -240,8 +240,13 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_event("add_question", %{"question" => content}, socket) do
     room = socket.assigns.room
+    user_fingerprint = socket.assigns.user_fingerprint
 
-    case Questions.create_question(%{"content" => content, "room_id" => room.id}) do
+    case Questions.create_question(%{
+           "content" => content,
+           "room_id" => room.id,
+           "user_fingerprint" => user_fingerprint
+         }) do
       {:ok, _} ->
         {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
 
@@ -251,10 +256,12 @@ defmodule RealtimeQaWeb.RoomLive do
   end
 
   def handle_event("edit_question", %{"id" => id}, socket) do
-    if is_host?(socket.assigns) do
-      {:noreply, assign(socket, editing_question_id: String.to_integer(id))}
+    question = Questions.get_question!(String.to_integer(id))
+
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
+      {:noreply, assign(socket, editing_question_id: question.id)}
     else
-      {:noreply, put_flash(socket, :error, "Only the host can edit questions")}
+      {:noreply, put_flash(socket, :error, "You can only edit your own questions")}
     end
   end
 
@@ -262,9 +269,9 @@ defmodule RealtimeQaWeb.RoomLive do
     do: {:noreply, assign(socket, editing_question_id: nil)}
 
   def handle_event("save_edit", %{"id" => id, "content" => content}, socket) do
-    if is_host?(socket.assigns) do
-      question = Questions.get_question!(String.to_integer(id))
+    question = Questions.get_question!(String.to_integer(id))
 
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       case Questions.update_question(question, %{"content" => content}) do
         {:ok, _} ->
           {:noreply,
@@ -279,13 +286,14 @@ defmodule RealtimeQaWeb.RoomLive do
           {:noreply, put_flash(socket, :error, "Failed to update question")}
       end
     else
-      {:noreply, put_flash(socket, :error, "Only the host can edit questions")}
+      {:noreply, put_flash(socket, :error, "You can only edit your own questions")}
     end
   end
 
   def handle_event("delete_question", %{"id" => id}, socket) do
-    if is_host?(socket.assigns) do
-      question = Questions.get_question!(String.to_integer(id))
+    question = Questions.get_question!(String.to_integer(id))
+
+    if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       {:ok, _} = Questions.delete_question(question)
 
       {:noreply,
@@ -293,7 +301,7 @@ defmodule RealtimeQaWeb.RoomLive do
        |> assign(questions: Questions.list_questions(socket.assigns.room.id))
        |> put_flash(:info, "Question deleted")}
     else
-      {:noreply, put_flash(socket, :error, "Only the host can delete questions")}
+      {:noreply, put_flash(socket, :error, "You can only delete your own questions")}
     end
   end
 
