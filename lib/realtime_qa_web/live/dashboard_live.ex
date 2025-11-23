@@ -4,57 +4,116 @@ defmodule RealtimeQaWeb.DashboardLive do
 
   def render(assigns) do
     ~H"""
-    <div class="p-10">
-      <h1 class="text-4xl font-bold mb-10">Q&A Dashboard</h1>
+    <div class="min-h-screen bg-gray-50">
+      <!-- Header -->
+      <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-6 py-4">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="hidden md:block">
+                <p class="text-sm font-medium text-gray-900">{@current_user.name}</p>
+                <p class="text-xs text-gray-500">{@current_user.email}</p>
+              </div>
+              <.link navigate={~p"/"} class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                Home
+              </.link>
+              <!-- Fixed Logout Button -->
+              <form action={~p"/auth/logout"} method="post">
+                <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+                <button
+                  type="submit"
+                  class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
+                >
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Create New Room</h2>
-        <form phx-submit="create_room">
-          <div class="space-y-4">
+      <div class="container mx-auto px-6 py-10">
+        <!-- Create Room Section -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-10">
+          <h2 class="text-2xl font-bold mb-6 text-gray-900">Create New Room</h2>
+          <form phx-submit="create_room" class="space-y-5">
             <div>
-              <label class="block text-lg font-medium mb-2">Room Title</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Room Title</label>
               <input
                 type="text"
                 name="title"
-                class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="My Q&A Session"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Weekly Team Meeting"
                 required
               />
             </div>
             <div>
-              <label class="block text-lg font-medium mb-2">Description (Optional)</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
               <textarea
                 name="description"
                 rows="3"
-                class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="What's this Q&A session about?"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="What's this room about?"
               ></textarea>
             </div>
-            <button type="submit" class="bg-blue-700 text-white text-lg font-medium px-4 py-2 rounded hover:bg-blue-900">
+            <button
+              type="submit"
+              class="bg-blue-600 text-white text-lg font-medium px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            >
               Create Room
             </button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
 
-      <div>
-        <h2 class="text-2xl font-semibold mb-4">Your Rooms</h2>
-        <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          <%= for room <- @rooms do %>
-            <div class="bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow">
-              <h3 class="text-xl font-medium mb-2"><%= room.title %></h3>
-              <p class="text-gray-500 mb-4"><%= room.description %></p>
-              <div class="flex justify-between items-center">
-                <div class="py-1 rounded text-black text-xl">
-                  Code: <span class="font-mono font-bold"><%= room.code %></span>
+        <!-- Rooms List -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+          <h2 class="text-2xl font-bold mb-6 text-gray-900">Your Rooms ({length(@rooms)})</h2>
+          <%= if Enum.empty?(@rooms) do %>
+            <div class="text-center py-12">
+              <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+              <p class="text-gray-500 text-lg mb-2">No rooms yet</p>
+              <p class="text-gray-400 text-sm">Create your first room above to get started!</p>
+            </div>
+          <% else %>
+            <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              <%= for room <- @rooms do %>
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-gray-50">
+                  <h3 class="text-xl font-semibold text-gray-900 mb-2">{room.title}</h3>
+                  <p class="text-gray-600 mb-4 min-h-[3rem] line-clamp-2">{room.description || "No description"}</p>
+
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p class="text-xs text-gray-600 mb-1">Room Code</p>
+                    <p class="font-mono font-bold text-2xl text-blue-600">{room.code}</p>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <.link
+                      navigate={~p"/room/#{room.code}"}
+                      class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                    >
+                      Open Room
+                    </.link>
+                    <button
+                      phx-click="delete_room"
+                      phx-value-id={room.id}
+                      data-confirm="Are you sure you want to delete this room? All questions will be lost."
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      title="Delete Room"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+
+                  <p class="text-xs text-gray-400 mt-3">
+                    Created {Calendar.strftime(room.inserted_at, "%b %d, %Y")}
+                  </p>
                 </div>
-                <.link
-                  navigate={~p"/room/#{room.code}"}
-                  class="text-blue-500 hover:text-blue-700"
-                >
-                  View Room →
-                </.link>
-              </div>
+              <% end %>
             </div>
           <% end %>
         </div>
@@ -64,23 +123,49 @@ defmodule RealtimeQaWeb.DashboardLive do
   end
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, rooms: Rooms.list_rooms())}
+    rooms = Rooms.list_rooms_by_host(socket.assigns.current_user.id)
+    {:ok, assign(socket, rooms: rooms)}
   end
 
-  def handle_event("create_room", %{"title" => title, "description" => description}, socket) do
-    case Rooms.create_room(%{"title" => title, "description" => description}) do
-      {:ok, _room} ->
+  def handle_event("create_room", params, socket) do
+    title = Map.get(params, "title", "")
+    description = Map.get(params, "description", "")
+
+    case Rooms.create_room(
+      %{"title" => title, "description" => description},
+      socket.assigns.current_user.id
+    ) do
+      {:ok, room} ->
         {:noreply,
          socket
          |> put_flash(:info, "Room created successfully!")
-         |> assign(rooms: Rooms.list_rooms())}
+         |> push_navigate(to: ~p"/room/#{room.code}")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Error creating room: #{error_to_string(changeset)}")
-         |> assign(rooms: Rooms.list_rooms())}
+        errors = error_to_string(changeset)
+        {:noreply, put_flash(socket, :error, "Error creating room: #{errors}")}
     end
+  end
+
+  def handle_event("delete_room", %{"id" => id}, socket) do
+    room = Rooms.get_room!(id)
+
+    # Verify ownership
+    if room.host_id == socket.assigns.current_user.id do
+      {:ok, _} = Rooms.delete_room(room)
+      rooms = Rooms.list_rooms_by_host(socket.assigns.current_user.id)
+
+      {:noreply,
+       socket
+       |> assign(rooms: rooms)
+       |> put_flash(:info, "Room deleted successfully")}
+    else
+      {:noreply, put_flash(socket, :error, "Unauthorized")}
+    end
+  end
+
+  defp get_csrf_token do
+    Phoenix.Controller.get_csrf_token()
   end
 
   defp error_to_string(changeset) do
@@ -89,7 +174,7 @@ defmodule RealtimeQaWeb.DashboardLive do
         String.replace(acc, "%{#{key}}", to_string(value))
       end)
     end)
-    |> Enum.map(fn {k, v} -> "#{k} #{v}" end)
+    |> Enum.map(fn {k, v} -> "#{k}: #{inspect(v)}" end)
     |> Enum.join(", ")
   end
 end
