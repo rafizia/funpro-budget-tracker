@@ -337,6 +337,22 @@ defmodule RealtimeQaWeb.RoomLive do
     {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
   end
 
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_deleted", payload: %{question_id: _id}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_updated", payload: %{question: _question}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
   # helpers
   defp extract_ip(%{address: address}),
     do: address |> Tuple.to_list() |> Enum.join(".")

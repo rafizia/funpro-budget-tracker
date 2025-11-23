@@ -34,10 +34,31 @@ defmodule RealtimeQa.Questions do
     question
     |> Question.changeset(attrs)
     |> Repo.update()
+    |> case do
+      {:ok, updated_question} ->
+        RealtimeQaWeb.Endpoint.broadcast("room:#{updated_question.room_id}", "question_updated", %{
+          question: updated_question
+        })
+
+        {:ok, updated_question}
+
+      error ->
+        error
+    end
   end
 
   def delete_question(%Question{} = question) do
-    Repo.delete(question)
+    case Repo.delete(question) do
+      {:ok, deleted_question} ->
+        RealtimeQaWeb.Endpoint.broadcast("room:#{deleted_question.room_id}", "question_deleted", %{
+          question_id: deleted_question.id
+        })
+
+        {:ok, deleted_question}
+
+      error ->
+        error
+    end
   end
 
   @doc """
