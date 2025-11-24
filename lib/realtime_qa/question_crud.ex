@@ -3,22 +3,35 @@ defmodule RealtimeQa.Questions do
   alias RealtimeQa.Repo
   alias RealtimeQa.{Question, QuestionUpvote}
 
-  defp unprioritize_all_in_room(room_id) do
-    fn ->
-      Repo.update_all(
-        from(q in Question, where: q.room_id == ^room_id and q.is_prioritized == true),
-        set: [is_prioritized: false]
+  def toggle_prioritize(%Question{} = question) do
+    new_priority = !question.is_prioritized
+
+    multi =
+      Ecto.Multi.new()
+      |> maybe_unprioritize_all(question, new_priority)
+      |> Ecto.Multi.update(
+        :update_question,
+        Question.prioritize_changeset(question, %{is_prioritized: new_priority})
       )
+
+    case Repo.transaction(multi) do
+      {:ok, %{update_question: updated_question}} ->
+        broadcast_prioritize_change(updated_question.room_id).(updated_question)
+      {:error, _step, reason, _changes_so_far} ->
+        {:error, reason}
     end
   end
 
-  defp update_question_priority(question, new_priority_value) do
-    fn ->
-      question
-      |> Question.prioritize_changeset(%{is_prioritized: new_priority_value})
-      |> Repo.update()
-    end
+  defp maybe_unprioritize_all(multi, %Question{room_id: room_id}, true) do
+    Ecto.Multi.update_all(
+      multi,
+      :unprioritize_all,
+      from(q in Question, where: q.room_id == ^room_id and q.is_prioritized == true),
+      set: [is_prioritized: false]
+    )
   end
+
+  defp maybe_unprioritize_all(multi, _question, false), do: multi
 
   defp broadcast_prioritize_change(room_id) do
     fn updated_question ->
@@ -26,56 +39,6 @@ defmodule RealtimeQa.Questions do
         question: updated_question
       })
       {:ok, updated_question}
-    end
-  end
-
-  defp compose_prioritize_transaction(question) do
-    new_priority = !question.is_prioritized
-    operations = if new_priority do
-      [
-        unprioritize_all_in_room(question.room_id),
-        update_question_priority(question, new_priority)
-      ]
-    else
-      [
-        update_question_priority(question, new_priority)
-      ]
-    end
-
-    fn ->
-      Enum.reduce_while(operations, {:ok, nil}, fn operation, _acc ->
-        case operation.() do
-          {:error, reason} ->
-            {:halt, {:error, reason}}
-          {count, _nil} when is_integer(count) ->
-            {:cont, {:ok, :continue}}
-          {:ok, result} ->
-            {:cont, {:ok, result}}
-        end
-      end)
-    end
-  end
-
-  def toggle_prioritize(%Question{} = question) do
-    composed_transaction = compose_prioritize_transaction(question)
-
-    result = Repo.transaction(fn ->
-      case composed_transaction.() do
-        {:ok, updated_question} when is_struct(updated_question, Question) ->
-          updated_question
-        {:ok, :continue} ->
-          Repo.get!(Question, question.id)
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
-
-    case result do
-      {:ok, updated_question} ->
-        broadcast_fn = broadcast_prioritize_change(question.room_id)
-        broadcast_fn.(updated_question)
-      error ->
-        error
     end
   end
 
