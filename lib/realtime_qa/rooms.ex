@@ -44,7 +44,6 @@ defmodule RealtimeQa.Rooms do
   end
 
   defp do_generate_code do
-    # Use uppercase letters and numbers, excluding similar looking chars (0, O, I, 1)
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     for _ <- 1..6, into: "", do: <<Enum.random(String.to_charlist(alphabet))>>
   end

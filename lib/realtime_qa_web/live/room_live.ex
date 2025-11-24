@@ -60,7 +60,7 @@ defmodule RealtimeQaWeb.RoomLive do
               </div>
             <% else %>
               <%= for q <- @questions do %>
-                <div class="bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow">
+                <div class={question_card_class(q.is_prioritized)}>
                   <div class="flex items-start gap-4">
                     <div class="flex-1 min-w-0">
                       <%= if @editing_question_id == q.id do %>
@@ -74,17 +74,31 @@ defmodule RealtimeQaWeb.RoomLive do
                             required
                           />
                           <button class="ml-1 p-2 rounded-full hover:bg-blue-50 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="oklch(54.6% 0.245 262.881)" d="M64 80c-8.8 0-16 7.2-16 16l0 320c0 8.8 7.2 16 16 16l320 0c8.8 0 16-7.2 16-16l0-242.7c0-4.2-1.7-8.3-4.7-11.3L320 86.6 320 176c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-96-32 0zm80 0l0 80 128 0 0-80-128 0zM0 96C0 60.7 28.7 32 64 32l242.7 0c17 0 33.3 6.7 45.3 18.7L429.3 128c12 12 18.7 28.3 18.7 45.3L448 416c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM160 320a64 64 0 1 1 128 0 64 64 0 1 1 -128 0z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 448 512">
+                              <path fill="oklch(54.6% 0.245 262.881)" d="M64 80c-8.8 0-16 7.2-16 16l0 320c0 8.8 7.2 16 16 16l320 0c8.8 0 16-7.2 16-16l0-242.7c0-4.2-1.7-8.3-4.7-11.3L320 86.6 320 176c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-96-32 0zm80 0l0 80 128 0 0-80-128 0zM0 96C0 60.7 28.7 32 64 32l242.7 0c17 0 33.3 6.7 45.3 18.7L429.3 128c12 12 18.7 28.3 18.7 45.3L448 416c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM160 320a64 64 0 1 1 128 0 64 64 0 1 1 -128 0z"/>
+                            </svg>
                           </button>
                           <button type="button" phx-click="cancel_edit" class="p-2 rounded-full hover:bg-red-50 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 384 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="oklch(63.7% 0.237 25.331)" d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 384 512">
+                              <path fill="oklch(63.7% 0.237 25.331)" d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/>
+                            </svg>
                           </button>
                         </form>
                       <% else %>
                         <!-- DISPLAY MODE -->
-                        <p class="text-xl text-gray-900">{q.content}</p>
+                        <div class="flex items-start gap-2">
+                          <%= if q.is_prioritized do %>
+                            <span class="text-2xl mt-[-2px]">⭐</span>
+                          <% end %>
+                          <p class="text-xl text-gray-900">{q.content}</p>
+                        </div>
                         <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
                           <span>Anonymous</span>
+                          <%= if q.is_prioritized do %>
+                            <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
+                              Prioritized
+                            </span>
+                          <% end %>
                         </div>
                       <% end %>
                     </div>
@@ -133,31 +147,53 @@ defmodule RealtimeQaWeb.RoomLive do
 
                       <!-- HOST/OWNER ACTION BUTTONS -->
                       <%= if is_host?(assigns) || q.user_fingerprint == @user_fingerprint do %>
-                        <div class="flex space-x-2 mt-2">
-                          <!-- EDIT BUTTON -->
-                          <button
-                            phx-click="edit_question"
-                            phx-value-id={q.id}
-                            title="Edit Question"
-                            class="p-2 rounded-full hover:bg-blue-50 transition"
-                          >
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                          </button>
+                        <div class="flex flex-col space-y-2 mt-2">
+                          <!-- PRIORITIZE BUTTON (HOST ONLY) -->
+                          <%= if is_host?(assigns) do %>
+                            <button
+                              phx-click="toggle_prioritize"
+                              phx-value-id={q.id}
+                              title={if q.is_prioritized, do: "Remove Priority", else: "Prioritize Question"}
+                              class={prioritize_button_class(q.is_prioritized)}
+                            >
+                              <%= if q.is_prioritized do %>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                                </svg>
+                              <% else %>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                                </svg>
+                              <% end %>
+                            </button>
+                          <% end %>
 
-                          <!-- DELETE BUTTON -->
-                          <button
-                            phx-click="delete_question"
-                            phx-value-id={q.id}
-                            data-confirm="Are you sure you want to delete this question?"
-                            title="Delete Question"
-                            class="p-2 rounded-full hover:bg-red-50 transition"
-                          >
-                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                          </button>
+                          <div class="flex space-x-2">
+                            <!-- EDIT BUTTON -->
+                            <button
+                              phx-click="edit_question"
+                              phx-value-id={q.id}
+                              title="Edit Question"
+                              class="p-2 rounded-full hover:bg-blue-50 transition"
+                            >
+                              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                              </svg>
+                            </button>
+
+                            <!-- DELETE BUTTON -->
+                            <button
+                              phx-click="delete_question"
+                              phx-value-id={q.id}
+                              data-confirm="Are you sure you want to delete this question?"
+                              title="Delete Question"
+                              class="p-2 rounded-full hover:bg-red-50 transition"
+                            >
+                              <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       <% end %>
                     </div>
@@ -314,6 +350,29 @@ defmodule RealtimeQaWeb.RoomLive do
     end
   end
 
+  def handle_event("toggle_prioritize", %{"id" => id}, socket) do
+    if is_host?(socket.assigns) do
+      question = Questions.get_question!(String.to_integer(id))
+
+      case Questions.toggle_prioritize(question) do
+        {:ok, updated_question} ->
+          flash_message = if updated_question.is_prioritized,
+            do: "Question prioritized",
+            else: "Question unprioritized"
+
+          {:noreply,
+           socket
+           |> assign(questions: Questions.list_questions(socket.assigns.room.id))
+           |> put_flash(:info, flash_message)}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Failed to toggle priority")}
+      end
+    else
+      {:noreply, put_flash(socket, :error, "Only the host can prioritize questions")}
+    end
+  end
+
   def handle_event("upvote", %{"id" => id}, socket) do
     question_id = String.to_integer(id)
     fingerprint = socket.assigns.user_fingerprint
@@ -370,6 +429,14 @@ defmodule RealtimeQaWeb.RoomLive do
     {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
   end
 
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "question_prioritized", payload: %{question: _question}},
+        socket
+      ) do
+    room = socket.assigns.room
+    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  end
+
   # helpers
   defp extract_ip(%{address: address}),
     do: address |> Tuple.to_list() |> Enum.join(".")
@@ -388,5 +455,22 @@ defmodule RealtimeQaWeb.RoomLive do
   defp is_host?(assigns) do
     assigns[:current_user] && assigns[:room] &&
       assigns.current_user.id == assigns.room.host_id
+  end
+
+  defp question_card_class(is_prioritized) do
+    base = "bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow"
+    if is_prioritized do
+      "#{base} border-l-4 border-yellow-400 bg-yellow-50"
+    else
+      base
+    end
+  end
+
+  defp prioritize_button_class(is_prioritized) do
+    if is_prioritized do
+      "p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition"
+    else
+      "p-2 rounded-full hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 transition"
+    end
   end
 end
