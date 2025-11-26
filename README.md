@@ -1,18 +1,150 @@
-# RealtimeQa
+# Realtime Q&A Platform
 
-To start your Phoenix server:
+## Deskripsi Proyek
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+**Realtime Q&A** adalah platform interaktif berbasis web yang memungkinkan audiens berpartisipasi secara langsung selama acara, kuliah, atau rapat dengan mengajukan sebuah pertanyaan.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Fitur Utama
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+1. **Instant Real-time Updates**: Saat pengguna mengirim pertanyaan, pengguna lain dapat melihatnya seketika tanpa perlu *refresh*.
 
-## Learn more
+2. **Secure Authentication (OAuth 2.0)**: Sistem login terintegrasi dengan **Google Sign-In**, memastikan keamanan akses pengguna.
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+3. **QR Code Room Access**: Aplikasi secara otomatis men-generate **QR Code** unik untuk setiap *room*. Peserta cukup memindai kode tersebut menggunakan kamera HP untuk langsung bergabung ke sesi tanya jawab.
+
+## User Flow
+
+1. **Login**: Pengguna dapat login menggunakan Google Sign-In untuk dapat mengakses platform.
+
+2. **Create Room**: Setelah login, pengguna dapat membuat *room* baru dengan memberikan nama *room*.
+
+3. **Join Room**: Pengguna lain dapat bergabung ke *room* yang sama dengan memindai QR Code yang dihasilkan tanpa perlu login.
+
+4. **Ask Question**: Setelah bergabung ke *room*, pengguna dapat mengajukan pertanyaan.
+
+5. **Real-time Updates**: Setiap pertanyaan yang diajukan akan terlihat secara real-time oleh pengguna lain yang terhubung ke *room* yang sama.
+
+## Tech Stack
+
+### Core & Backend
+* **[Elixir](https://elixir-lang.org/)**
+* **[Phoenix Framework](https://www.phoenixframework.org/)**
+* **[PostgreSQL](https://www.postgresql.org/)**
+
+### Frontend & Realtime
+* **Phoenix LiveView**
+* **Tailwind CSS**
+
+### Dependencies
+* `ueberauth_google`: Menangani flow autentikasi OAuth 2.0.
+* `eqrcode`: Generator QR Code berbasis SVG.
+* `ecto_sql`: Wrapper database dan query generator.
+
+## Installation & Setup
+
+### Prerequisites
+* Elixir (v1.14 atau lebih baru) & Erlang.
+* PostgreSQL Database Server.
+* Git.
+
+### Langkah Instalasi
+
+1.  **Clone Repositori**
+    ```bash
+    git clone <repository-url>
+    cd realtime_qa
+    ```
+
+2.  **Install Dependensi**
+    ```bash
+    mix deps.get
+    ```
+
+3.  **Konfigurasi Environment Variables:**
+    Aplikasi ini membutuhkan kredensial Google OAuth agar fitur login berfungsi.
+
+    **Untuk Windows (PowerShell):**
+    ```powershell
+    $env:GOOGLE_CLIENT_ID="MASUKKAN_CLIENT_ID_ANDA_DISINI"
+    $env:GOOGLE_CLIENT_SECRET="MASUKKAN_CLIENT_SECRET_ANDA_DISINI"
+    $env:GOOGLE_REDIRECT_URI="http://localhost:4000/auth/google/callback"
+    ```
+
+    **Untuk Linux/Mac (Bash/Zsh):**
+    ```bash
+    export GOOGLE_CLIENT_ID="MASUKKAN_CLIENT_ID_ANDA_DISINI"
+    export GOOGLE_CLIENT_SECRET="MASUKKAN_CLIENT_SECRET_ANDA_DISINI"
+    export GOOGLE_REDIRECT_URI="http://localhost:4000/auth/google/callback"
+    ```
+    
+    > *Catatan: Pastikan Anda telah mendaftarkan aplikasi di Google Cloud Console dan mengaktifkan callback URL yang sesuai.*
+
+4.  **Setup Database**
+    ```bash
+    mix ecto.setup
+    ```
+
+5.  **Jalankan Server**
+    ```bash
+    mix phx.server
+    ```
+
+6.  **Akses Aplikasi**
+    Buka browser dan kunjungi:
+    [http://localhost:4000](http://localhost:4000)
+
+## Lesson Learned
+
+### 1. Immutability
+
+Di Elixir, semua struktur data bersifat immutable. Artinya, Elixir tidak pernah memodifikasi data yang ada di memori, sebaliknya Elixir selalu membuat versi baru dari data tersebut.
+
+Contoh:
+```elixir
+def create_question(attrs \\ %{}) do
+    %Question{}
+    |> Question.changeset(attrs)
+    |> Repo.insert()
+    |> case do
+      {:ok, question} ->
+        RealtimeQaWeb.Endpoint.broadcast("room:#{question.room_id}", "question_created", %{
+          question: question
+        })
+
+        {:ok, question}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+end
+```
+
+1. `%Question{}`: Membuat sebuah struct Question baru yang kosong.
+
+2. `|> Question.changeset(attrs)`: Data `%Question{}` dikirim ke fungsi changeset.
+Fungsi ini tidak mengubah struct kosong tadi. Sebaliknya, fungsi tersebut menghasilkan dan mengembalikan struktur data baru (sebuah Ecto.Changeset) yang berisi informasi tentang perubahan yang ingin dilakukan.
+
+### 2. Pattern Matching
+
+Pattern matching memungkinkan kita untuk memeriksa struktur data dan mengekstrak nilai atau menentukan alur logika berdasarkan bentuk datanya.
+
+Contoh:
+```elixir
+def add_upvote(question_id, user_fingerprint) do
+    case Repo.transaction(fn ->
+           case insert_upvote_record(question_id, user_fingerprint) do
+             {:ok, _upvote} ->
+               increment_upvote_count(question_id)
+
+             {:error, changeset} ->
+               Repo.rollback(changeset)
+        end
+    end)
+end
+```
+
+1. `case insert_upvote_record(question_id, user_fingerprint) do`: Kode ini memanggil fungsi `insert_upvote_record` dan mencocokkan hasil kembaliannya dengan pola-pola yang didefinisikan di bawahnya.
+
+2. `{:ok, _upvote}`: Jika insert berhasil, maka akan dijalankan `increment_upvote_count(question_id)`.
+
+3. `{:error, changeset}`: Jika insert gagal, maka akan dijalankan `Repo.rollback(changeset)`.
