@@ -25,7 +25,14 @@ defmodule RealtimeQaWeb.RoomLive do
               <p class="font-mono font-bold text-3xl text-blue-600">{@room.code}</p>
             </div>
             <div class="bg-white border border-gray-200 rounded-lg p-2 inline-block">
-              <%= (RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}") |> EQRCode.encode() |> EQRCode.svg(width: 170) |> Phoenix.HTML.raw() %>
+              <%= Phoenix.HTML.raw(
+                EQRCode.svg(
+                  EQRCode.encode(
+                    RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}"
+                  ),
+                  width: 170
+                )
+              ) %>
             </div>
           </div>
         </div>
