@@ -4,237 +4,249 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def render(assigns) do
     ~H"""
-    <%= if @room do %>
-      <div class="p-10">
-        <!-- ROOM HEADER -->
-        <div class="mb-8">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex-1">
-              <h1 class="text-4xl font-bold mb-2">{@room.title}</h1>
-              <p class="text-gray-600 text-lg">{@room.description}</p>
-            </div>
-            <%= if is_host?(assigns) do %>
-              <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold flex items-center gap-2">
-                <span>👑</span> Host
-              </span>
-            <% end %>
-          </div>
-          <div class="flex justify-between items-start">
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 inline-block">
-              <p class="text-sm text-gray-600 mb-1">Room Code</p>
-              <p class="font-mono font-bold text-3xl text-blue-600">{@room.code}</p>
-            </div>
-            <div class="bg-white border border-gray-200 rounded-lg p-2 inline-block">
-              <%= (RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}") |> EQRCode.encode() |> EQRCode.svg(width: 170) |> Phoenix.HTML.raw() %>
-            </div>
-          </div>
-        </div>
+    <div class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
 
-        <!-- ASK FORM -->
-        <div class="mb-8">
-          <h2 class="text-2xl font-semibold mb-4">Ask a Question</h2>
-          <form phx-submit="add_question">
-            <input
-              type="text"
-              name="question"
-              class="w-full bg-white rounded p-3 border border-gray-300"
-              placeholder="Type your question..."
-              required
-            />
-            <button class="bg-blue-700 text-lg font-medium text-white px-6 py-2 rounded mt-3 hover:bg-blue-900 transition">
-              Submit Question
-            </button>
-          </form>
-        </div>
-
-        <!-- QUESTIONS LIST -->
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-semibold">Questions ({length(@questions)})</h2>
-          </div>
-
-          <div class="space-y-5">
-            <%= if Enum.empty?(@questions) do %>
-              <div class="text-center py-12 text-gray-500">
-                <p class="text-lg">No questions yet. Be the first to ask!</p>
+      <%= if @room do %>
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+          <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0 mr-4">
+                <div class="flex items-center gap-3">
+                  <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">
+                    {@room.title}
+                  </h1>
+                  <%= if is_host?(assigns) do %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+                      👑 Host
+                    </span>
+                  <% end %>
+                </div>
+                <p class="text-sm text-slate-500 truncate mt-1">{@room.description}</p>
               </div>
-            <% else %>
-              <%= for q <- @questions do %>
-                <div class={question_card_class(q.is_prioritized)}>
-                  <div class="flex items-start gap-4">
-                    <div class="flex-1 min-w-0">
-                      <%= if @editing_question_id == q.id do %>
-                        <!-- EDIT MODE -->
-                        <form phx-submit="save_edit" phx-value-id={q.id} class="flex items-center gap-2">
-                          <input
-                            type="text"
-                            name="content"
-                            value={q.content}
-                            class="flex-1 border border-gray-300 rounded p-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            required
-                          />
-                          <button class="ml-1 p-2 rounded-full hover:bg-blue-50 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 448 512">
-                              <path fill="oklch(54.6% 0.245 262.881)" d="M64 80c-8.8 0-16 7.2-16 16l0 320c0 8.8 7.2 16 16 16l320 0c8.8 0 16-7.2 16-16l0-242.7c0-4.2-1.7-8.3-4.7-11.3L320 86.6 320 176c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-96-32 0zm80 0l0 80 128 0 0-80-128 0zM0 96C0 60.7 28.7 32 64 32l242.7 0c17 0 33.3 6.7 45.3 18.7L429.3 128c12 12 18.7 28.3 18.7 45.3L448 416c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM160 320a64 64 0 1 1 128 0 64 64 0 1 1 -128 0z"/>
-                            </svg>
-                          </button>
-                          <button type="button" phx-click="cancel_edit" class="p-2 rounded-full hover:bg-red-50 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 384 512">
-                              <path fill="oklch(63.7% 0.237 25.331)" d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/>
-                            </svg>
-                          </button>
-                        </form>
-                      <% else %>
-                        <!-- DISPLAY MODE -->
-                        <div class="flex items-start gap-2">
-                          <%= if q.is_prioritized do %>
-                            <span class="text-2xl mt-[-2px]">⭐</span>
-                          <% end %>
-                          <p class="text-xl text-gray-900">{q.content}</p>
-                        </div>
-                        <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
-                          <span>Anonymous</span>
-                          <%= if q.is_prioritized do %>
-                            <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
-                              Prioritized
-                            </span>
-                          <% end %>
-                        </div>
-                      <% end %>
-                    </div>
 
-                    <div class="flex flex-col items-center space-y-2">
-                      <!-- UPVOTE BUTTON -->
+              <div class="flex items-center gap-4 shrink-0">
+                <div class="hidden sm:flex flex-col items-end">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Room Code</span>
+                  <span class="font-mono text-2xl font-bold text-indigo-600 leading-none">{@room.code}</span>
+                </div>
+                <div class="bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                  <%= (RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}") |> EQRCode.encode() |> EQRCode.svg(width: 48) |> Phoenix.HTML.raw() %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="max-w-3xl mx-auto px-4 sm:px-6 mt-8 sm:mt-10">
+
+          <div class="mb-12">
+            <form phx-submit="add_question" class="relative group">
+              <div class="
+                bg-white rounded-2xl shadow-sm border border-slate-300
+                overflow-hidden transition-all duration-200
+                focus-within:shadow-lg focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10
+              ">
+                <textarea
+                  name="question"
+                  rows="3"
+                  class="
+                    w-full border-0 bg-transparent p-5 text-lg text-slate-800
+                    placeholder:text-slate-400 resize-none focus:ring-0
+                  "
+                  placeholder="Type your question..."
+                  required
+                ></textarea>
+
+                <div class="bg-slate-50 px-4 py-3 border-t border-slate-200 flex justify-between items-center">
+                  <div class="flex items-center gap-2 text-slate-500">
+                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span class="text-xs font-semibold">Anonymous</span>
+                  </div>
+                  <button class="
+                    bg-indigo-600 hover:bg-indigo-700 text-white
+                    px-5 py-2 rounded-lg text-sm font-bold
+                    shadow-sm shadow-indigo-200 transition-all
+                    flex items-center gap-2 active:scale-95
+                  ">
+                    <span>Send</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-6 px-1">
+              <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                Questions
+                <span class="bg-slate-200 text-slate-600 text-xs font-bold py-1 px-2 rounded-full">
+                  {length(@questions)}
+                </span>
+              </h2>
+              <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Top Voted</div>
+            </div>
+
+            <div class="space-y-4">
+              <%= if Enum.empty?(@questions) do %>
+                <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
+                  <div class="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <p class="text-slate-500 font-medium">No questions yet.</p>
+                  <p class="text-sm text-slate-400">Be the first to break the ice!</p>
+                </div>
+              <% else %>
+                <%= for q <- @questions do %>
+                  <div class={question_card_class(q.is_prioritized)}>
+
+                    <div class="flex flex-col items-center shrink-0 pt-1">
                       <button
                         phx-click="upvote"
                         phx-value-id={q.id}
-                        class={upvote_button_class(q.id, @upvoted_questions)}
                         disabled={is_upvoted?(q.id, @upvoted_questions)}
+                        class="group/upvote flex flex-col items-center gap-1 transition-all"
                       >
-                        <%= if is_upvoted?(q.id, @upvoted_questions) do %>
-                          <svg
-                            class="w-[30px] h-[30px] text-green-600"
-                            aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              fill-rule="evenodd"
-                              d="M15.03 9.684h3.965c.322 0 .64.08.925.232.286.153.532.374.717.645a2.109 2.109 0 0 1 .242 1.883l-2.36 7.201c-.288.814-.48 1.355-1.884 1.355-2.072 0-4.276-.677-6.157-1.256-.472-.145-.924-.284-1.348-.404h-.115V9.478a25.485 25.485 0 0 0 4.238-5.514 1.8 1.8 0 0 1 .901-.83 1.74 1.74 0 0 1 1.21-.048c.396.13.736.397.96.757.225.36.32.788.269 1.211l-1.562 4.63ZM4.177 10H7v8a2 2 0 1 1-4 0v-6.823C3 10.527 3.527 10 4.176 10Z"
-                              clip-rule="evenodd"
-                            />
+                        <div class={if is_upvoted?(q.id, @upvoted_questions),
+                            do: "bg-green-100 text-green-600 shadow-sm border border-green-200 w-10 h-10 flex items-center justify-center rounded-xl transition-all",
+                            else: "bg-slate-50 border border-slate-200 text-slate-400 group-hover/upvote:border-indigo-300 group-hover/upvote:text-indigo-600 group-hover/upvote:shadow-md w-10 h-10 flex items-center justify-center rounded-xl transition-all"}>
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                           </svg>
-                        <% else %>
-                          <svg
-                            class="w-[30px] h-[30px]"
-                            aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke="currentColor"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M7 11c.889-.086 1.416-.543 2.156-1.057a22.323 22.323 0 0 0 3.958-5.084 1.6 1.6 0 0 1 .582-.628 1.549 1.549 0 0 1 1.466-.087c.205.095.388.233.537.406a1.64 1.64 0 0 1 .384 1.279l-1.388 4.114M7 11H4v6.5A1.5 1.5 0 0 0 5.5 19v0A1.5 1.5 0 0 0 7 17.5V11Zm6.5-1h4.915c.286 0 .372.014.626.15.254.135.472.332.637.572a1.874 1.874 0 0 1 .215 1.673l-2.098 6.4C17.538 19.52 17.368 20 16.12 20c-2.303 0-4.79-.943-6.67-1.475"
-                            />
-                          </svg>
-                        <% end %>
-                        <span class="text-sm font-medium">{q.upvotes}</span>
+                        </div>
+                        <span class={if is_upvoted?(q.id, @upvoted_questions),
+                            do: "text-sm font-bold text-green-700",
+                            else: "text-sm font-bold text-slate-500 group-hover/upvote:text-indigo-600"}>
+                          {q.upvotes}
+                        </span>
                       </button>
+                    </div>
 
-                      <!-- HOST/OWNER ACTION BUTTONS -->
-                      <%= if is_host?(assigns) || q.user_fingerprint == @user_fingerprint do %>
-                        <div class="flex flex-col space-y-2 mt-2">
-                          <!-- PRIORITIZE BUTTON (HOST ONLY) -->
-                          <%= if is_host?(assigns) do %>
-                            <button
-                              phx-click="toggle_prioritize"
-                              phx-value-id={q.id}
-                              title={if q.is_prioritized, do: "Remove Priority", else: "Prioritize Question"}
-                              class={prioritize_button_class(q.is_prioritized)}
-                            >
-                              <%= if q.is_prioritized do %>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                                </svg>
-                              <% else %>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                                </svg>
-                              <% end %>
-                            </button>
-                          <% end %>
+                    <div class="flex-1 min-w-0 flex flex-col">
+                      <%= if @editing_question_id == q.id do %>
+                        <form phx-submit="save_edit" phx-value-id={q.id} class="w-full">
+                          <textarea
+                            name="content"
+                            class="w-full border-indigo-300 rounded-lg p-3 text-slate-800 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 text-lg min-h-[100px] shadow-sm"
+                            required
+                          >{q.content}</textarea>
+                          <div class="flex gap-2 mt-3 justify-end">
+                            <button type="button" phx-click="cancel_edit" class="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-2 rounded hover:bg-slate-100">Cancel</button>
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm">Save</button>
+                          </div>
+                        </form>
+                      <% else %>
+                        <div>
+                          <p class="text-lg text-slate-800 leading-relaxed break-words">{q.content}</p>
 
-                          <div class="flex space-x-2">
-                            <!-- EDIT BUTTON -->
-                            <button
-                              phx-click="edit_question"
-                              phx-value-id={q.id}
-                              title="Edit Question"
-                              class="p-2 rounded-full hover:bg-blue-50 transition"
-                            >
-                              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                              </svg>
-                            </button>
-
-                            <!-- DELETE BUTTON -->
-                            <button
-                              phx-click="delete_question"
-                              phx-value-id={q.id}
-                              data-confirm="Are you sure you want to delete this question?"
-                              title="Delete Question"
-                              class="p-2 rounded-full hover:bg-red-50 transition"
-                            >
-                              <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                              </svg>
-                            </button>
+                          <div class="mt-2 flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                              <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                              <span class="text-xs font-medium text-slate-400">Anonymous</span>
+                            </div>
+                            <%= if q.is_prioritized do %>
+                              <span class="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wide">
+                                📌 Pinned
+                              </span>
+                            <% end %>
                           </div>
                         </div>
                       <% end %>
                     </div>
+
+                    <%= if (is_host?(assigns) || q.user_fingerprint == @user_fingerprint) && @editing_question_id != q.id do %>
+                      <div class="flex flex-col gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 ml-2">
+
+                        <%= if is_host?(assigns) do %>
+                          <button
+                            phx-click="toggle_prioritize"
+                            phx-value-id={q.id}
+                            title={if q.is_prioritized, do: "Unpin", else: "Pin"}
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 border border-transparent hover:border-amber-200 transition-all"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                          </button>
+                        <% end %>
+
+                        <button
+                          phx-click="edit_question"
+                          phx-value-id={q.id}
+                          title="Edit"
+                          class="w-8 h-8 flex items-center justify-center rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-transparent hover:border-indigo-200 transition-all"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+
+                        <button
+                          phx-click="delete_question"
+                          phx-value-id={q.id}
+                          data-confirm="Delete this question?"
+                          title="Delete"
+                          class="w-8 h-8 flex items-center justify-center rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 border border-transparent hover:border-rose-200 transition-all"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+
+                      </div>
+                    <% end %>
+
                   </div>
-                </div>
+                <% end %>
               <% end %>
-            <% end %>
+            </div>
+          </div>
+        </main>
+
+      <% else %>
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-700 p-4">
+          <div class="max-w-md w-full bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 text-white">
+            <div class="text-center mb-10">
+              <h1 class="text-4xl font-extrabold tracking-tight mb-2">Realtime QA</h1>
+              <p class="text-indigo-100 text-lg">Join the conversation</p>
+            </div>
+
+            <form phx-submit="join_room" class="space-y-6">
+              <div>
+                <label class="block text-xs font-bold mb-2 text-indigo-100 uppercase tracking-widest">Room Code</label>
+                <input
+                  type="text"
+                  name="code"
+                  class="w-full px-4 py-4 bg-white/20 border-2 border-white/10 rounded-xl focus:ring-4 focus:ring-white/20 focus:border-white text-center text-3xl font-mono font-bold uppercase tracking-widest placeholder:text-white/30 text-white transition-all outline-none"
+                  placeholder="ABC123"
+                  maxlength="6"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                class="w-full bg-white text-indigo-600 text-lg font-bold px-4 py-4 rounded-xl hover:bg-indigo-50 hover:scale-[1.02] transition-all shadow-lg shadow-indigo-900/20"
+              >
+                Enter Room &rarr;
+              </button>
+            </form>
           </div>
         </div>
-      </div>
-    <% else %>
-      <!-- JOIN ROOM -->
-      <div class="min-h-screen flex items-center justify-center bg-gray-50">
-        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-          <h1 class="text-4xl font-bold mb-8 text-center">Join a Room</h1>
-          <form phx-submit="join_room" class="space-y-4">
-            <div>
-              <label class="block text-lg font-medium mb-2">Enter Room Code</label>
-              <input
-                type="text"
-                name="code"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-mono uppercase"
-                placeholder="ABC123"
-                maxlength="6"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              class="w-full bg-blue-700 text-white text-lg font-medium px-4 py-3 rounded-lg hover:bg-blue-900 transition"
-            >
-              Join Room
-            </button>
-          </form>
-        </div>
-      </div>
-    <% end %>
+      <% end %>
+
+    </div>
     """
   end
 
-  # lifecycle
+  # --- LIFECYCLE ---
   def mount(_params, session, socket) do
     fingerprint = session["user_fingerprint"] || generate_fallback_fingerprint(socket)
     current_user = if session["user_id"], do: RealtimeQa.Auth.get_user(session["user_id"]), else: nil
@@ -264,9 +276,7 @@ defmodule RealtimeQaWeb.RoomLive do
          |> push_navigate(to: ~p"/")}
 
       room ->
-        # Subscribe to receive realtime broadcasts
         RealtimeQaWeb.Endpoint.subscribe("room:#{room.id}")
-
         questions = Questions.list_questions(room.id)
         upvoted = Questions.get_upvoted_question_ids(room.id, socket.assigns.user_fingerprint)
 
@@ -279,7 +289,7 @@ defmodule RealtimeQaWeb.RoomLive do
   def handle_params(_params, _uri, socket),
     do: {:noreply, assign(socket, room: nil, questions: [])}
 
-  # events
+  # --- EVENTS ---
   def handle_event("join_room", %{"code" => code}, socket),
     do: {:noreply, push_patch(socket, to: ~p"/room/#{String.upcase(code)}")}
 
@@ -302,7 +312,6 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_event("edit_question", %{"id" => id}, socket) do
     question = Questions.get_question!(String.to_integer(id))
-
     if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       {:noreply, assign(socket, editing_question_id: question.id)}
     else
@@ -315,18 +324,13 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_event("save_edit", %{"id" => id, "content" => content}, socket) do
     question = Questions.get_question!(String.to_integer(id))
-
     if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       case Questions.update_question(question, %{"content" => content}) do
         {:ok, _} ->
           {:noreply,
            socket
-           |> assign(
-             questions: Questions.list_questions(socket.assigns.room.id),
-             editing_question_id: nil
-           )
+           |> assign(questions: Questions.list_questions(socket.assigns.room.id), editing_question_id: nil)
            |> put_flash(:info, "Question updated")}
-
         {:error, _} ->
           {:noreply, put_flash(socket, :error, "Failed to update question")}
       end
@@ -337,10 +341,8 @@ defmodule RealtimeQaWeb.RoomLive do
 
   def handle_event("delete_question", %{"id" => id}, socket) do
     question = Questions.get_question!(String.to_integer(id))
-
     if is_host?(socket.assigns) || question.user_fingerprint == socket.assigns.user_fingerprint do
       {:ok, _} = Questions.delete_question(question)
-
       {:noreply,
        socket
        |> assign(questions: Questions.list_questions(socket.assigns.room.id))
@@ -353,18 +355,13 @@ defmodule RealtimeQaWeb.RoomLive do
   def handle_event("toggle_prioritize", %{"id" => id}, socket) do
     if is_host?(socket.assigns) do
       question = Questions.get_question!(String.to_integer(id))
-
       case Questions.toggle_prioritize(question) do
         {:ok, updated_question} ->
-          flash_message = if updated_question.is_prioritized,
-            do: "Question prioritized",
-            else: "Question unprioritized"
-
+          flash = if updated_question.is_prioritized, do: "Question prioritized", else: "Question unprioritized"
           {:noreply,
            socket
            |> assign(questions: Questions.list_questions(socket.assigns.room.id))
-           |> put_flash(:info, flash_message)}
-
+           |> put_flash(:info, flash)}
         {:error, _} ->
           {:noreply, put_flash(socket, :error, "Failed to toggle priority")}
       end
@@ -385,92 +382,56 @@ defmodule RealtimeQaWeb.RoomLive do
         {:ok, _} ->
           new_upvoted = MapSet.put(upvoted, question_id)
           new_questions = Questions.list_questions(socket.assigns.room.id)
-
-          {:noreply,
-           socket
-           |> assign(questions: new_questions, upvoted_questions: new_upvoted)}
-
+          {:noreply, assign(socket, questions: new_questions, upvoted_questions: new_upvoted)}
         {:error, _} ->
           {:noreply, put_flash(socket, :error, "Failed to upvote")}
       end
     end
   end
 
-  # Handle broadcasts from PubSub
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "question_created", payload: %{question: _question}},
-        socket
-      ) do
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  # --- PUBSUB HANDLERS ---
+  def handle_info(%Phoenix.Socket.Broadcast{event: "question_created"}, socket) do
+    {:noreply, assign(socket, questions: Questions.list_questions(socket.assigns.room.id))}
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "question_upvoted", payload: %{question: _question}},
-        socket
-      ) do
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  def handle_info(%Phoenix.Socket.Broadcast{event: "question_upvoted"}, socket) do
+    {:noreply, assign(socket, questions: Questions.list_questions(socket.assigns.room.id))}
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "question_deleted", payload: %{question_id: _id}},
-        socket
-      ) do
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  def handle_info(%Phoenix.Socket.Broadcast{event: "question_deleted"}, socket) do
+    {:noreply, assign(socket, questions: Questions.list_questions(socket.assigns.room.id))}
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "question_updated", payload: %{question: _question}},
-        socket
-      ) do
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  def handle_info(%Phoenix.Socket.Broadcast{event: "question_updated"}, socket) do
+    {:noreply, assign(socket, questions: Questions.list_questions(socket.assigns.room.id))}
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "question_prioritized", payload: %{question: _question}},
-        socket
-      ) do
-    room = socket.assigns.room
-    {:noreply, assign(socket, questions: Questions.list_questions(room.id))}
+  def handle_info(%Phoenix.Socket.Broadcast{event: "question_prioritized"}, socket) do
+    {:noreply, assign(socket, questions: Questions.list_questions(socket.assigns.room.id))}
   end
 
-  # helpers
-  defp extract_ip(%{address: address}),
-    do: address |> Tuple.to_list() |> Enum.join(".")
-
+  # --- HELPERS ---
+  defp extract_ip(%{address: address}), do: address |> Tuple.to_list() |> Enum.join(".")
   defp extract_ip(_), do: "unknown"
 
-  defp is_upvoted?(question_id, upvoted_set),
-    do: MapSet.member?(upvoted_set, question_id)
-
-  defp upvote_button_class(question_id, upvoted_set) do
-    if is_upvoted?(question_id, upvoted_set),
-      do: "flex flex-col items-center text-green-600 cursor-not-allowed",
-      else: "flex flex-col items-center text-gray-600 hover:text-gray-800 cursor-pointer"
-  end
+  defp is_upvoted?(question_id, upvoted_set), do: MapSet.member?(upvoted_set, question_id)
 
   defp is_host?(assigns) do
-    assigns[:current_user] && assigns[:room] &&
-      assigns.current_user.id == assigns.room.host_id
+    assigns[:current_user] && assigns[:room] && assigns.current_user.id == assigns.room.host_id
   end
 
   defp question_card_class(is_prioritized) do
-    base = "bg-white rounded-lg shadow-sm p-7 hover:shadow-md transition-shadow"
-    if is_prioritized do
-      "#{base} border-l-4 border-yellow-400 bg-yellow-50"
-    else
-      base
-    end
-  end
+    base = "group relative flex items-start gap-4 px-5 py-4 bg-white rounded-xl border transition-all duration-200 shadow-sm"
+    # Removed group-hover:py-6 here. Added hover:shadow-md for depth instead of size.
+    hover = "hover:shadow-md hover:border-indigo-300"
 
-  defp prioritize_button_class(is_prioritized) do
-    if is_prioritized do
-      "p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition"
-    else
-      "p-2 rounded-full hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 transition"
-    end
+    state =
+      if is_prioritized do
+        "border-amber-300 ring-1 ring-amber-100 shadow-amber-50 bg-amber-50/30"
+      else
+        "border-slate-200"
+      end
+
+    "#{base} #{hover} #{state}"
   end
 end
