@@ -166,7 +166,7 @@ end
 1. Fungsi ini mengambalikan sebuah fungsi yang menerima `updated_question` sebagai parameter
 2. Fungsi ini melakukan broadcast menggunakan `room_id`, lalu mengembalikan `{:ok, updated_question}`
 
-### 4. Function Compostion
+### 4. Lazy Evaluation
 
 
 ### 5. Pure Function
@@ -186,3 +186,36 @@ end
 
 1. Fungsi ini mengambil nama dari sebuah email
 2. Untuk input yang sama ("hilmy@gmail.com") selalu menghasilkan output yang sama juga ("hilmy")
+
+### 6. Lazy Evaluation
+
+Lazy Evaluation adalah teknik di mana suatu operasi tidak langsung dieksekusi, tetapi hanya akan dijalankan ketika dibutuhkan. Elixir mendukung lazy evaluation melalui modul `Stream`, yang memproses data satu per satu, bukan seluruhnya sekaligus seperti Enum.
+
+```elixir
+defmodule RealtimeQa.Export do
+  def generate_csv_content(questions) do
+    header = "ID,Waktu,Pertanyaan,Upvotes\n"
+
+    rows =
+      questions
+      |> Stream.map(fn q ->
+        timestamp = Calendar.strftime(q.inserted_at, "%Y-%m-%d %H:%M:%S")
+
+        question = String.replace(q.content, "\"", "\"\"")
+
+        "#{q.id},#{timestamp},\"#{question}\",#{q.upvotes}\n"
+      end)
+
+    Stream.concat([header], rows)
+    |> Enum.into("")
+  end
+end
+```
+1. `Stream.map` tidak langsung memproses seluruh `questions`. Fungsi di dalamnya hanya disiapkan sebagai pipeline. Eksekusi baru terjadi ketika dibutuhkan.
+
+2. `Stream.concat` juga bersifat lazy. Header tidak digabungkan ke semua rows sampai dipaksa untuk dievaluasi.
+
+3. `Enum.into("")` adalah titik ketika seluruh stream dieksekusi.
+Ini disebut eager evaluation.
+
+Pada tahap ini saja semua rows diproses dan digabungkan menjadi string final.
