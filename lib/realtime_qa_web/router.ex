@@ -89,6 +89,8 @@ defmodule RealtimeQaWeb.Router do
       session: {__MODULE__, :protected_session, []} do
         live "/dashboard", DashboardLive
     end
+
+    get "/export/room/:id", ExportController, :export_room_questions
   end
 
   # Add these functions at the bottom of your Router module
