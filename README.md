@@ -148,3 +148,41 @@ end
 2. `{:ok, _upvote}`: Jika insert berhasil, maka akan dijalankan `increment_upvote_count(question_id)`.
 
 3. `{:error, changeset}`: Jika insert gagal, maka akan dijalankan `Repo.rollback(changeset)`.
+
+### 3. Higher-Order Function
+
+Higher-order function adalah fungsi yang menerima fungsi lain sebagai argumen atau mengembalikan fungsi lain sebagai output.
+
+```elixir
+defp broadcast_prioritize_change(room_id) do
+    fn updated_question ->
+      RealtimeQaWeb.Endpoint.broadcast("room:#{room_id}", "question_prioritized", %{
+        question: updated_question
+      })
+      {:ok, updated_question}
+    end
+end
+```
+1. Fungsi ini mengambalikan sebuah fungsi yang menerima `updated_question` sebagai parameter
+2. Fungsi ini melakukan broadcast menggunakan `room_id`, lalu mengembalikan `{:ok, updated_question}`
+
+### 4. Function Compostion
+
+
+### 5. Pure Function
+
+Pure Function adalah fungsi yang selalu menghasilkan output yang sama untuk input yang sama. Fungsi ini tidak memiliki efek sampang (tidak mengubah state di luar fungsi, tidak tulis database, tidak broadcast, dll)
+
+```elixir
+defp extract_name_from_email(email) do
+  email
+  |> String.split("@")
+  |> List.first()
+  |> String.split(".")
+  |> Enum.map(&String.capitalize/1)
+  |> Enum.join(" ")
+end
+```
+
+1. Fungsi ini mengambil nama dari sebuah email
+2. Untuk input yang sama ("hilmy@gmail.com") selalu menghasilkan output yang sama juga ("hilmy")
