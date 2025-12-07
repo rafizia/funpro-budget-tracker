@@ -8,7 +8,7 @@ defmodule RealtimeQaWeb.HomeLive do
         <!-- Hero Section -->
         <div class="text-center mb-16">
           <h1 class="text-6xl font-bold text-gray-900 mb-4">
-            RealtimeQA
+            FunAsk
           </h1>
           <p class="text-2xl text-gray-600 mb-8">
             Interactive Q&A platform for real-time engagement
@@ -110,7 +110,7 @@ defmodule RealtimeQaWeb.HomeLive do
 
         <!-- Features Section -->
         <div class="max-w-5xl mx-auto mt-20">
-          <h3 class="text-3xl font-bold text-center text-gray-900 mb-12">Why RealtimeQA?</h3>
+          <h3 class="text-3xl font-bold text-center text-gray-900 mb-12">Why FunAsk?</h3>
           <div class="grid md:grid-cols-3 gap-8">
             <div class="text-center p-6">
               <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
