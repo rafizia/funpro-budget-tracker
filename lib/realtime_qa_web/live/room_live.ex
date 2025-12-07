@@ -12,6 +12,11 @@ defmodule RealtimeQaWeb.RoomLive do
             <div class="flex items-center justify-between">
               <div class="flex-1 min-w-0 mr-4">
                 <div class="flex items-center gap-3">
+                  <.link navigate={if is_host?(assigns), do: ~p"/dashboard", else: "/"} class="px-2 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5"/>
+                    </svg>
+                  </.link>
                   <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">
                     {@room.title}
                   </h1>
@@ -248,7 +253,7 @@ defmodule RealtimeQaWeb.RoomLive do
         <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-700 p-4">
           <div class="max-w-md w-full bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 text-white">
             <div class="text-center mb-10">
-              <h1 class="text-4xl font-extrabold tracking-tight mb-2">Realtime QA</h1>
+              <h1 class="text-4xl font-extrabold tracking-tight mb-2">FunAsk</h1>
               <p class="text-indigo-100 text-lg">Join the conversation</p>
             </div>
 
