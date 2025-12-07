@@ -64,7 +64,7 @@ config :phoenix, :json_library, Jason
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
 
-# config :ueberauth, Ueberauth,
-#   providers: [
-#     google: {Ueberauth.Strategy.Google, []}
-#   ]
+config :ueberauth, Ueberauth,
+  providers: [
+    google: {Ueberauth.Strategy.Google, []}
+  ]
