@@ -1,8 +1,33 @@
-# Realtime Q&A Platform
+# Realtime Q&A Platform - FunAsk
+
+### [https://fun-ask.up.railway.app/](https://fun-ask.up.railway.app/)
+
+## Daftar Isi
+- [Realtime Q\&A Platform - FunAsk](#realtime-qa-platform---funask)
+    - [https://fun-ask.up.railway.app/](#httpsfun-askuprailwayapp)
+  - [Daftar Isi](#daftar-isi)
+  - [Deskripsi Proyek](#deskripsi-proyek)
+  - [Fitur Utama](#fitur-utama)
+  - [User Flow](#user-flow)
+  - [Roles](#roles)
+  - [Tech Stack](#tech-stack)
+    - [Core \& Backend](#core--backend)
+    - [Frontend](#frontend)
+    - [Dependencies](#dependencies)
+  - [Installation \& Setup](#installation--setup)
+    - [Prerequisites](#prerequisites)
+    - [Langkah Instalasi](#langkah-instalasi)
+  - [Lesson Learned](#lesson-learned)
+    - [1. Immutability](#1-immutability)
+    - [2. Pattern Matching](#2-pattern-matching)
+    - [3. Higher-Order Function](#3-higher-order-function)
+    - [4. Function Composition](#4-function-composition)
+    - [5. Pure Function](#5-pure-function)
+    - [6. Lazy Evaluation](#6-lazy-evaluation)
 
 ## Deskripsi Proyek
 
-**Realtime Q&A** adalah platform interaktif berbasis web yang memungkinkan audiens berpartisipasi secara langsung selama acara, kuliah, atau rapat dengan mengajukan sebuah pertanyaan.
+**FunAsk** adalah platform interaktif berbasis web yang memungkinkan audiens berpartisipasi secara langsung selama acara, kuliah, atau rapat dengan **mengajukan sebuah pertanyaan**. Aplikasi ini memungkinkan pengguna untuk mengajukan pertanyaan dan memberi upvote pada pertanyaan yang mereka atau orang lain ajukan.
 
 ## Fitur Utama
 
@@ -24,6 +49,11 @@
 
 5. **Real-time Updates**: Setiap pertanyaan yang diajukan akan terlihat secara real-time oleh pengguna lain yang terhubung ke *room* yang sama.
 
+## Roles
+
+1. **Host**: Pembuat *room*. Pengguna harus sign-in terlebih dahulu untuk dapat memulai dan mengatur sesi tanya jawab.
+2. **Audience**: Partisipan yang dapat bergabung ke dalam *room* untuk mengajukan pertanyaan secara langsung tanpa perlu melakukan sign-in.
+
 ## Tech Stack
 
 ### Core & Backend
@@ -31,7 +61,7 @@
 * **[Phoenix Framework](https://www.phoenixframework.org/)**
 * **[PostgreSQL](https://www.postgresql.org/)**
 
-### Frontend & Realtime
+### Frontend
 * **Phoenix LiveView**
 * **Tailwind CSS**
 
@@ -89,7 +119,7 @@
     mix phx.server
     ```
 
-6.  **Akses Aplikasi**
+6.  **Akses Aplikasi**:
     Buka browser dan kunjungi:
     [http://localhost:4000](http://localhost:4000)
 
@@ -97,9 +127,9 @@
 
 ### 1. Immutability
 
-Di Elixir, semua struktur data bersifat immutable. Artinya, Elixir tidak pernah memodifikasi data yang ada di memori, sebaliknya Elixir selalu membuat versi baru dari data tersebut.
+Di Elixir, semua struktur data bersifat *immutable*. Artinya, Elixir tidak pernah memodifikasi data yang ada di memori, sebaliknya Elixir selalu membuat versi baru dari data tersebut.
 
-Contoh:
+Berikut adalah contoh penerapan *immutability* untuk membuat pertanyaan baru:
 ```elixir
 def create_question(attrs \\ %{}) do
     %Question{}
@@ -128,7 +158,7 @@ Fungsi ini tidak mengubah struct kosong tadi. Sebaliknya, fungsi tersebut mengha
 
 Pattern matching memungkinkan kita untuk memeriksa struktur data dan mengekstrak nilai atau menentukan alur logika berdasarkan bentuk datanya.
 
-Contoh:
+Berikut adalah contoh penerapan *pattern matching* untuk menambahkan upvote pada pertanyaan:
 ```elixir
 def add_upvote(question_id, user_fingerprint) do
     case Repo.transaction(fn ->
@@ -153,6 +183,7 @@ end
 
 Higher-order function adalah fungsi yang menerima fungsi lain sebagai argumen atau mengembalikan fungsi lain sebagai output.
 
+Berikut adalah contoh penerapan *higher-order function* untuk memprioritaskan pertanyaan:
 ```elixir
 defp broadcast_prioritize_change(room_id) do
     fn updated_question ->
@@ -166,13 +197,35 @@ end
 1. Fungsi ini mengambalikan sebuah fungsi yang menerima `updated_question` sebagai parameter
 2. Fungsi ini melakukan broadcast menggunakan `room_id`, lalu mengembalikan `{:ok, updated_question}`
 
-### 4. Lazy Evaluation
+### 4. Function Composition
 
+Function composition adalah teknik di mana kita menggabungkan beberapa fungsi untuk membuat fungsi baru. Output dari sebuah fungsi langsung digunakan sebagai input untuk fungsi berikutnya.
+
+Dalam matematika, jika kita memiliki fungsi $f(x)$ dan $g(x)$, komposisinya ditulis sebagai $f(g(x))$. Artinya, $g(x)$ dijalankan terlebih dahulu, dan hasilnya diproses oleh $f$.
+
+Berikut adalah contoh penerapan *function composition* untuk men-generate QR Code:
+
+```elixir
+<%= Phoenix.HTML.raw(
+  EQRCode.svg(
+    EQRCode.encode(
+      RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}"
+    ),
+    width: 180
+  )
+) %>
+```
+
+1. `RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}"`: Menggabungkan URL endpoint dengan kode room.
+2. `EQRCode.encode`: Mengubah URL menjadi QR Code.
+3. `EQRCode.svg`: Mengubah QR Code menjadi SVG.
+4. `Phoenix.HTML.raw`: Mengubah string menjadi HTML.
 
 ### 5. Pure Function
 
-Pure Function adalah fungsi yang selalu menghasilkan output yang sama untuk input yang sama. Fungsi ini tidak memiliki efek sampang (tidak mengubah state di luar fungsi, tidak tulis database, tidak broadcast, dll)
+Pure Function adalah fungsi yang selalu menghasilkan output yang sama untuk input yang sama. Fungsi ini tidak memiliki efek sampang (tidak mengubah state di luar fungsi, tidak tulis database, tidak broadcast, dan lain-lain).
 
+Berikut adalah contoh penerapan *pure function* untuk mengambil nama dari email:
 ```elixir
 defp extract_name_from_email(email) do
   email
@@ -191,6 +244,7 @@ end
 
 Lazy Evaluation adalah teknik di mana suatu operasi tidak langsung dieksekusi, tetapi hanya akan dijalankan ketika dibutuhkan. Elixir mendukung lazy evaluation melalui modul `Stream`, yang memproses data satu per satu, bukan seluruhnya sekaligus seperti Enum.
 
+Berikut adalah contoh penerapan *lazy evaluation* untuk menghasilkan CSV:
 ```elixir
 defmodule RealtimeQa.Export do
   def generate_csv_content(questions) do
