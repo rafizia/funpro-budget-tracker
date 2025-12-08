@@ -236,7 +236,14 @@ defmodule RealtimeQaWeb.RoomLive do
                   <p class="text-sm text-slate-500 mb-6">Scan to join on your phone</p>
 
                   <div class="bg-white p-2 rounded-xl border border-slate-100 shadow-inner mb-6">
-                    <%= (RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}") |> EQRCode.encode() |> EQRCode.svg(width: 180) |> Phoenix.HTML.raw() %>
+                    <%= Phoenix.HTML.raw(
+                      EQRCode.svg(
+                        EQRCode.encode(
+                          RealtimeQaWeb.Endpoint.url() <> ~p"/room/#{@room.code}"
+                        ),
+                        width: 180
+                      )
+                    ) %>
                   </div>
 
                   <div class="w-full bg-slate-50 rounded-xl p-4 border border-slate-100">
